@@ -1,5 +1,6 @@
 import '../../model/users.dart';
 import '../cubit/users_cubit.dart';
+import '../user/user_bloc.dart';
 import 'new_user.dart';
 import 'user_details.dart';
 import 'package:flutter/material.dart';
@@ -18,12 +19,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UsersCubit, ResultState<dynamic>>(
+    return BlocBuilder<UserBloc, UserState<dynamic>>(
       builder: (ctx, state) {
-        UsersCubit cubit = UsersCubit.get(context);
+        UserBloc bloc = UserBloc.get(context);
         return Scaffold(
           appBar: AppBar(title: const Text("Home Screen"), centerTitle: true),
-          body: _buildContect(context: ctx, state: state, cubit: cubit),
+          body: _buildContect(context: ctx, state: state, bloc: bloc),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               Navigator.of(context)
@@ -38,23 +39,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   _buildContect(
       {required BuildContext context,
-      required ResultState state,
-      required UsersCubit cubit}) {
-    return state.when(
-      idle: () {
-        return _buildLoading();
-      },
-      loading: () {
-        return _buildLoading();
-      },
-      success: (userData) {
-        return _buildbody(context: context, cubit: cubit, users: cubit.users!);
-      },
-      error: (NetworkExceptions error) {
-        return _buildErorr(
-            message: NetworkExceptions.getErrorMessage(error), cubit: cubit);
-      },
-    );
+      required UserState state,
+      required UserBloc bloc}) {
+    return state.when(loadInProgress: () {
+      return _buildLoading();
+    }, success: (data) {
+      return _buildbody(context: context, bloc: bloc, users: bloc.users ?? []);
+    }, failure: (NetworkExceptions error) {
+      return _buildErorr(
+          message: NetworkExceptions.getErrorMessage(error), bloc: bloc);
+    });
   }
 
   _buildLoading() {
@@ -64,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   _buildbody(
       {required List<User> users,
       required BuildContext context,
-      required UsersCubit cubit}) {
+      required UserBloc bloc}) {
     final Size size = MediaQuery.of(context).size;
     return SizedBox(
       height: size.height,
@@ -75,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
         separatorBuilder: ((context, index) => const SizedBox(height: 10)),
         itemBuilder: (context, index) => InkWell(
           onTap: () {
-            cubit.getUser(users[index].id.toString());
+            bloc.add(UserEvent.getUser(users[index].id.toString()));
             Navigator.of(context)
                 .push(MaterialPageRoute(builder: (_) => const UserDetails()));
           },
@@ -116,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _buildErorr({required String message, required UsersCubit cubit}) {
+  _buildErorr({required String message, required UserBloc bloc}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -124,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 10),
         MaterialButton(
           child: const Text("Try Agan"),
-          onPressed: () => cubit.getUsers(),
+          onPressed: () => bloc.add(const UserEvent.getUsers()),
         )
       ],
     );

@@ -1,3 +1,5 @@
+import 'package:api_mobile/presentation/user/user_bloc.dart';
+
 import 'data/network/dio_factory.dart';
 import 'presentation/cubit/users_cubit.dart';
 import 'repository/repostory.dart';
@@ -10,6 +12,7 @@ final instance = GetIt.instance;
 
 void initAppModule() {
   instance.registerFactory(() => UsersCubit(repository: instance()));
+  instance.registerFactory(() => UserBloc(repository: instance()));
   instance.registerLazySingleton<Repository>(
       () => RepositoryImpl(webServices: instance()));
   instance.registerLazySingleton(() => WebServices(instance()));

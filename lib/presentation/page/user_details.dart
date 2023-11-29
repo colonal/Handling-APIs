@@ -1,3 +1,4 @@
+import 'package:api_mobile/presentation/user/user_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -11,26 +12,22 @@ class UserDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UsersCubit, ResultState>(
+    return BlocBuilder<UserBloc, UserState>(
       builder: (ctx, state) {
-        UsersCubit cubit = UsersCubit.get(ctx);
         return Scaffold(
           appBar: AppBar(title: const Text("User Details"), centerTitle: true),
-          body: _buildContect(context: ctx, state: state, cubit: cubit),
+          body: _buildContect(context: ctx, state: state),
         );
       },
     );
   }
 
-  _buildContect(
-      {required BuildContext context,
-      required ResultState state,
-      required UsersCubit cubit}) {
+  _buildContect({
+    required BuildContext context,
+    required UserState state,
+  }) {
     return state.when(
-      idle: () {
-        return _buildLoading();
-      },
-      loading: () {
+      loadInProgress: () {
         return _buildLoading();
       },
       success: (userData) {
@@ -38,10 +35,9 @@ class UserDetails extends StatelessWidget {
           return _buildbody(context: context, user: userData);
         }
       },
-      error: (NetworkExceptions error) {
+      failure: (NetworkExceptions error) {
         return _buildErorr(
             message: NetworkExceptions.getErrorMessage(error),
-            cubit: cubit,
             context: context);
       },
     );
@@ -118,10 +114,7 @@ class UserDetails extends StatelessWidget {
         ));
   }
 
-  _buildErorr(
-      {required String message,
-      required UsersCubit cubit,
-      required BuildContext context}) {
+  _buildErorr({required String message, required BuildContext context}) {
     return SizedBox(
       width: double.infinity,
       child: Column(

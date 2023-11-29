@@ -1,3 +1,4 @@
+import 'package:api_mobile/presentation/user/user_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,12 +11,12 @@ class NewUserPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UsersCubit, ResultState<dynamic>>(
+    return BlocBuilder<UserBloc, UserState<dynamic>>(
       builder: (ctx, state) {
-        UsersCubit cubit = UsersCubit.get(context);
+        UserBloc bloc = UserBloc.get(context);
         return Scaffold(
           appBar: AppBar(title: const Text("Home Screen"), centerTitle: true),
-          body: _buildContect(context: ctx, state: state, cubit: cubit),
+          body: _buildContect(context: ctx, state: state, bloc: bloc),
         );
       },
     );
@@ -23,13 +24,10 @@ class NewUserPage extends StatelessWidget {
 
   _buildContect(
       {required BuildContext context,
-      required ResultState state,
-      required UsersCubit cubit}) {
+      required UserState state,
+      required UserBloc bloc}) {
     return state.when(
-      idle: () {
-        return _buildLoading();
-      },
-      loading: () {
+      loadInProgress: () {
         return _buildLoading();
       },
       success: (creatNew) {
@@ -38,16 +36,16 @@ class NewUserPage extends StatelessWidget {
             const Duration(milliseconds: 300),
             () {
               // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
-              cubit.emit(const ResultState.success(null));
+              bloc.emit(const UserState.success(null));
               Navigator.of(context).pop();
             },
           );
         }
-        return _buildbody(context: context, cubit: cubit);
+        return _buildbody(context: context, bloc: bloc);
       },
-      error: (NetworkExceptions error) {
+      failure: (NetworkExceptions error) {
         return _buildErorr(
-            message: NetworkExceptions.getErrorMessage(error), cubit: cubit);
+            message: NetworkExceptions.getErrorMessage(error), bloc: bloc);
       },
     );
   }
@@ -56,7 +54,7 @@ class NewUserPage extends StatelessWidget {
     return const Center(child: CircularProgressIndicator.adaptive());
   }
 
-  _buildbody({required BuildContext context, required UsersCubit cubit}) {
+  _buildbody({required BuildContext context, required UserBloc bloc}) {
     final Size size = MediaQuery.of(context).size;
     return SizedBox(
       height: size.height,
@@ -65,29 +63,29 @@ class NewUserPage extends StatelessWidget {
         padding: const EdgeInsets.all(10.0),
         child: Column(
           children: [
-            _buildItemField(cubit, title: "Name", controller: cubit.name),
+            _buildItemField(bloc, title: "Name", controller: bloc.name),
             const SizedBox(height: 15),
-            _buildItemField(cubit, title: "Email", controller: cubit.email),
+            _buildItemField(bloc, title: "Email", controller: bloc.email),
             const SizedBox(height: 15),
             Row(
               children: [
                 Expanded(
                   child: RadioListTile(
                     value: Gender.male,
-                    groupValue: cubit.gender,
+                    groupValue: bloc.gender,
                     title: const Text("Male"),
                     onChanged: (value) {
-                      cubit.changeGender(value);
+                      bloc.add(UserEvent.changeGender(value));
                     },
                   ),
                 ),
                 Expanded(
                   child: RadioListTile(
                     value: Gender.female,
-                    groupValue: cubit.gender,
+                    groupValue: bloc.gender,
                     title: const Text("Female"),
                     onChanged: (value) {
-                      cubit.changeGender(value);
+                      bloc.add(UserEvent.changeGender(value));
                     },
                   ),
                 ),
@@ -96,7 +94,7 @@ class NewUserPage extends StatelessWidget {
             const SizedBox(height: 15),
             MaterialButton(
               onPressed: () {
-                cubit.creatUser();
+                bloc.add(const UserEvent.createUser());
               },
               color: Colors.indigo[900],
               child: const Text(
@@ -110,7 +108,7 @@ class NewUserPage extends StatelessWidget {
     );
   }
 
-  Row _buildItemField(UsersCubit cubit,
+  Row _buildItemField(UserBloc bloc,
       {required String title, required TextEditingController controller}) {
     return Row(
       children: [
@@ -138,7 +136,7 @@ class NewUserPage extends StatelessWidget {
     );
   }
 
-  _buildErorr({required String message, required UsersCubit cubit}) {
+  _buildErorr({required String message, required UserBloc bloc}) {
     return SizedBox(
       width: double.infinity,
       child: Column(
@@ -150,7 +148,7 @@ class NewUserPage extends StatelessWidget {
           MaterialButton(
             color: Colors.blueAccent,
             child: const Text("Try Agan"),
-            onPressed: () => cubit.getUsers(),
+            onPressed: () => bloc.add(const UserEvent.getUsers()),
           )
         ],
       ),
